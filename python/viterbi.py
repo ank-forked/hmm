@@ -3,17 +3,25 @@ import numpy as np
 
 #the Viterbi algorithm
 def viterbi(hmm, initial_dist, emissions):
-    probs = hmm.emission_dist(emissions[0]) * initial_dist
+    probs = np.log(hmm.emission_dist(emissions[0]) * initial_dist)
     stack = []
 
     for emission in emissions[1:]:
-        trans_probs = hmm.transition_probs * np.row_stack(probs)
+        trans_probs = np.log(hmm.transition_probs) + np.row_stack(probs)
         max_col_ixs = np.argmax(trans_probs, axis=0)
-        probs = hmm.emission_dist(emission) * trans_probs[max_col_ixs, np.arange(hmm.num_states)]
+        probs = np.log(hmm.emission_dist(emission)) + trans_probs[max_col_ixs, np.arange(hmm.num_states)]
 
         stack.append(max_col_ixs)
 
     state_seq = [np.argmax(probs)]
+
+    while stack:
+        max_col_ixs = stack.pop()
+        state_seq.append(max_col_ixs[state_seq[-1]])
+
+    state_seq.reverse()
+
+    return state_seq
 
     while stack:
         max_col_ixs = stack.pop()
